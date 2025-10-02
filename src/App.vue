@@ -1,11 +1,10 @@
 <script setup>
+import Header from './components/Header.vue';
 </script>
 
 <template>
-  <div class="">
-    <h1>lasd</h1>
+  <div class="bg-white w-4/5 m-auto h-screen rounded-r-xl shadow-xl mt-14">
+    <Header/>
   </div>
 </template>
 
-<style scoped>
-</style>
