@@ -3,7 +3,7 @@ import Header from './components/Header.vue';
 import CardList from './components/CardList.vue';
 import Drawer from './components/Drawer.vue';
 import axios from 'axios';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, provide, reactive, ref, watch } from 'vue';
 
 
 const items = ref([]);
@@ -22,6 +22,58 @@ const onChangeSearchInput = (event) =>{
   filters.searchQuery = event.target.value
 }
 
+const fetchFavorites = async () => {
+  try{
+    const {data: favorites} = await axios.get('https://007c7bb5747041ef.mokky.dev/favorites')
+
+    items.value = items.value.map(item => {
+      const favorite = favorites.find(favorite => favorite.parentId === item.id);
+      
+      if(!favorite){
+        return item;
+      }
+
+      return {
+        ...item,
+        isFavorite:true,
+        favoriteId: favorite.id
+      };
+    });
+
+    console.log(items.value)
+  }catch (err){
+    console.log(err);
+  }
+}
+
+const addToFavorite = async (item) => {
+  try{ 
+    if (!item.isFavorite){
+
+      const obj = {parentId: item.id};
+
+      item.isFavorite = true;
+
+
+      const {data} = await axios.post('https://007c7bb5747041ef.mokky.dev/favorites', obj);
+
+      item.favoriteId = data.id;
+    }
+    else{
+      await axios.delete(`https://007c7bb5747041ef.mokky.dev/favorites/${item.favoriteId}`)
+      item.isFavorite = false;
+      item.favoriteId = null;
+    }
+  
+    console.log(data);
+
+    
+  }catch(err){
+    console.log(err);
+  }
+
+}
+
 const fetchItems = async () => {
   try {
     const params = {
@@ -37,16 +89,26 @@ const fetchItems = async () => {
     const { data } = await axios.get(`https://604781a0efa572c1.mokky.dev/items`,{
       params
     });
-    items.value = data;
+    items.value = data.map((obj) => ({
+      ...obj,
+      isFavorite: false,
+      favoriteId:null,
+      isAdded: false
+    }));
   }catch (err) {
     console.log(err);
   }
 }
 
-onMounted(fetchItems);
+onMounted(async () => {
+  await fetchItems();
+  await fetchFavorites();
+});
 
 watch(filters, fetchItems);
 
+
+provide('addToFavorite',addToFavorite);
 </script>
 
 <template>
@@ -75,7 +137,7 @@ watch(filters, fetchItems);
         </div>
 
       <div class="mt-10">
-        <CardList :items="items"/>
+        <CardList :items="items" @addToFavorite="addToFavorite"/>
       </div>
   
     </div>
