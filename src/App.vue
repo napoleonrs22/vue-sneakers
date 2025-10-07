@@ -7,13 +7,65 @@ import { onMounted, provide, reactive, ref, watch } from 'vue';
 
 
 const items = ref([]);
+const cart = ref([]);
+
+
+const drawerOpen = ref(false);
+
+const closeDrawer = () => {
+  drawerOpen.value = false;
+}
+const openDrawer =  () => {
+  drawerOpen.value = true;
+}
 
 const filters = reactive({
   sortBy: 'title',
   searchQuery: ''
 })
 
+const addToCart = (item) => {
+  cart.value.push(item);
+  item.isAdded = true
+}
 
+
+const removeFromCart = (item) => {
+  const index = cart.value.findIndex(cartItem => cartItem.id === item.id);
+  
+  if (index !== -1) {
+    cart.value.splice(index, 1);
+  }
+
+  item.isAdded = false; 
+}
+
+const removeById = (id) => {
+  // 1. Удаляем из реактивного массива корзины
+  const index = cart.value.findIndex(item => item.id === id);
+  if (index !== -1) {
+    cart.value.splice(index, 1);
+  }
+  
+  // 2. Сбрасываем флаг isAdded в основном массиве items
+  const item = items.value.find(item => item.id === id);
+  if (item) {
+    item.isAdded = false;
+  }
+  
+  console.log('Удалено из корзины:', id);
+  console.log('Корзина после удаления:', cart.value);
+}
+
+const onClickAddPlus = (item) => {
+  if(!item.isAdded){
+    addToCart(item);
+  }
+  else{
+    removeFromCart(item);
+  }
+  console.log(cart);
+}
 
 const onChangeSelect = (event) => {
   filters.sortBy = event.target.value
@@ -108,13 +160,22 @@ onMounted(async () => {
 watch(filters, fetchItems);
 
 
-provide('addToFavorite',addToFavorite);
+provide('cart',{
+  cart,
+  closeDrawer,
+  openDrawer,
+  addToCart,
+  removeFromCart,
+  removeById,
+  
+});
 </script>
 
 <template>
-  <!-- <Drawer/> -->
+  <Drawer v-if="drawerOpen"/>
+
   <div class="bg-white w-4/5 m-auto  rounded-r-xl shadow-xl mt-14">
-    <Header/>
+    <Header :total-price="1500" @open-drawer="openDrawer"/>
 
 
     <div class="p-10">
@@ -137,7 +198,7 @@ provide('addToFavorite',addToFavorite);
         </div>
 
       <div class="mt-10">
-        <CardList :items="items" @addToFavorite="addToFavorite"/>
+        <CardList :items="items" @add-toFavorite="addToFavorite" @add-to-cart="onClickAddPlus"/>
       </div>
   
     </div>
