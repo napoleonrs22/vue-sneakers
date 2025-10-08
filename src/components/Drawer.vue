@@ -25,7 +25,7 @@ defineProps({
         
 
         <div v-else>
-            <CardItemList v-if="totalPrice"/>
+            <CardItemList/>
             <div class="flex-shrink-0">
                 <div class="flex flex-col gap-4 mb-4 my-7">
                     <div class="flex gap-2">
